@@ -1,23 +1,21 @@
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import "./App.css";
+import Category from "./Pages/Category";
+import HeroPage from "./Pages/HeroPage";
+import Fiber from "./Pages/Fiber";
+import Strock from "./Pages/Strock";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<HeroPage />} />
+          <Route path="/category" element={<Category />} />
+          <Route path="/fiber" element={<Fiber />} />
+          <Route path="/strock" element={<Strock />} />
+        </Routes>
+      </BrowserRouter>
     </div>
   );
 }
