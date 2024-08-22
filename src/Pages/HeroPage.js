@@ -35,13 +35,13 @@ function HeroPage() {
           </div>
           <div className="button-container">
             <div className="hero-button" onClick={handleCategoryClick}>
-              Category
+              Category Analysis
             </div>
             <div className="hero-button" onClick={handleFiberClick}>
-              Fiber
+              Fiber Analysis
             </div>
             <div className="hero-button" onClick={handleStrockClick}>
-              Strocks
+              Strocks Analysis
             </div>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import axios from "axios";
 import "../Style/Category.css";
 
 function Category() {
@@ -7,6 +8,7 @@ function Category() {
   const [infusionImage, setInfusionImage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [responses, setResponses] = useState([]);
 
   const handleImageChange = (event, setImage) => {
     const file = event.target.files[0];
@@ -19,25 +21,74 @@ function Category() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsLoading(true);
+    setResponses([]); // Clear previous responses
 
-    setTimeout(() => {
-      setIsLoading(false);
+    const requests = [];
+
+    if (particleImage) {
+      const particleBlob = await fetch(particleImage).then(res => res.blob());
+      const particleFormData = new FormData();
+      particleFormData.append('image', particleBlob, 'particleImage.jpg');
+      requests.push(
+        axios.post("http://127.0.0.1:8080/predict-tea-variant", particleFormData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        }).then(response => ({
+          type: 'Tea Category:',
+          data: response.data.tea_variant
+        }))
+      );
+    }
+
+    if (liquidImage) {
+      const liquidBlob = await fetch(liquidImage).then(res => res.blob());
+      const liquidFormData = new FormData();
+      liquidFormData.append('image', liquidBlob, 'liquidImage.jpg');
+      requests.push(
+        axios.post("http://127.0.0.1:8080/predict", liquidFormData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        }).then(response => ({
+          type: 'Elevation(Liquid):',
+          data: response.data.tea_elevation
+        }))
+      );
+    }
+
+    if (infusionImage) {
+      const infusionBlob = await fetch(infusionImage).then(res => res.blob());
+      const infusionFormData = new FormData();
+      infusionFormData.append('image', infusionBlob, 'infusionImage.jpg');
+      requests.push(
+        axios.post("http://127.0.0.1:8080/predict-infusion", infusionFormData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        }).then(response => ({
+          type: 'Elevation(Infusion):',
+          data: response.data.tea_elevation
+        }))
+      );
+    }
+
+    try {
+      const results = await Promise.all(requests);
+      setResponses(results);
       setShowModal(true);
-    }, 2000);
+    } catch (error) {
+      console.error("Error submitting images:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const closeModal = () => {
     setShowModal(false);
   };
 
-  const isSubmitDisabled = !(particleImage && liquidImage && infusionImage);
+  const isSubmitDisabled = !(particleImage || liquidImage || infusionImage);
 
   return (
     <div className="category-container">
       <div className="c-header">Category Analysis</div>
-
       <div className="c-inputs">
         <div className="input-feild">
           <label>Input Particle Image:</label>
@@ -98,9 +149,15 @@ function Category() {
           <div className="modal">
             <h3>Submission Successful!</h3>
             <h1>Results!</h1>
-            <h4>Category: BOP01</h4>
-            <h4>Regon: Low</h4>
-            <button onClick={closeModal} className="close-button">Close</button>
+            {responses.map((response, index) => (
+              <div key={index}>
+                <h4>{response.type}</h4>
+                <p>{response.data}</p>
+              </div>
+            ))}
+            <button onClick={closeModal} className="close-button">
+              Close
+            </button>
           </div>
         </div>
       )}

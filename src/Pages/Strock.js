@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import axios from "axios";
 import "../Style/Category.css";
 
 function Strock() {
   const [particleImage, setParticleImage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [strockData, setStrockData] = useState(null);
 
   const handleImageChange = (event, setImage) => {
     const file = event.target.files[0];
@@ -17,20 +19,43 @@ function Strock() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsLoading(true);
+    setStrockData(null); // Clear previous result
 
-    setTimeout(() => {
+    try {
+      const formData = new FormData();
+      if (particleImage) {
+        // Convert base64 to a Blob
+        const particleBlob = await fetch(particleImage).then((res) =>
+          res.blob()
+        );
+        formData.append("image", particleBlob, "particleImage.jpg");
+
+        const response = await axios.post(
+          "http://127.0.0.1:8080/identify-stroke",
+          formData,
+          { headers: { "Content-Type": "multipart/form-data" } }
+        );
+
+        // Assuming the response contains the `result_image` and `statistics`
+        setStrockData(response.data);
+      } else {
+        console.error("No image provided.");
+      }
+    } catch (error) {
+      console.error("Error submitting image:", error);
+    } finally {
       setIsLoading(false);
       setShowModal(true);
-    }, 2000);
+    }
   };
 
   const closeModal = () => {
     setShowModal(false);
   };
 
-  const isSubmitDisabled = !(particleImage);
+  const isSubmitDisabled = !particleImage;
 
   return (
     <div className="category-container">
@@ -69,12 +94,25 @@ function Strock() {
         )}
       </button>
 
-      {showModal && (
+      {showModal && strockData && (
         <div className="modal-overlay">
           <div className="modal">
             <h3>Submission Successful!</h3>
             <h1>Results!</h1>
-            <h4>Strock Presantage: 20%</h4>
+            {strockData.result_image && (
+              <div>
+                <h4>Result Image:</h4>
+                <img src={`data:image/jpeg;base64,${strockData.result_image}`} alt="Result" style={{ maxWidth: "100%" }} />
+              </div>
+            )}
+            {strockData.statistics && (
+              <div>
+                <h4>Statistics:</h4>
+                <p>Brown Particle Ratio: {strockData.statistics.brown_particle_ratio}</p>
+                <p>Number of Brown Particles: {strockData.statistics.number_of_brown_particles}</p>
+                <p>Number of External Contours: {strockData.statistics.number_of_external_contours}</p>
+              </div>
+            )}
             <button onClick={closeModal} className="close-button">
               Close
             </button>
